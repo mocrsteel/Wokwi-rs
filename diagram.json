@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "author": "Yannick",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-logic-analyzer", "id": "logic", "top": -326.05, "left": 300, "attrs": {} }
+  ],
+  "connections": [
+    [ "mega:4", "logic:D0", "red", [ "v0" ] ],
+    [ "mega:11", "logic:D1", "yellow", [ "v0" ] ],
+    [ "mega:10", "logic:D2", "orange", [ "v0" ] ],
+    [ "mega:3", "logic:D3", "brown", [ "v0" ] ],
+    [ "mega:6", "logic:D4", "black", [ "v0" ] ],
+    [ "mega:GND.3", "logic:GND", "blue", [ "v40", "h0" ] ]
+  ],
+  "dependencies": {}
+}
