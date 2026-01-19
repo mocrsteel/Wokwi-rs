@@ -2,82 +2,22 @@
 #![no_main]
 
 use arduino_hal::default_serial;
-use arduino_hal::simple_pwm::{IntoPwmPin, Timer0Pwm, Timer1Pwm, Timer2Pwm, Timer3Pwm, Timer4Pwm};
-use arduino_hal::simple_pwm::Prescaler;
 use arduino_hal::pac::TC1;
+use arduino_hal::simple_pwm::IntoPwmPin;
 use panic_halt as _;
 
-use ufmt::{uWrite, uwrite};
-
 mod servo;
+// mod debug;
 
-pub fn debug_dump<W: uWrite>(serial: &mut W, timer1: &TC1) -> Result<(), <W as uWrite>::Error> {
-    serial.write_str("\r")?;
-    uwrite!(
-        serial,
-        "tTCNTn = {:#?};",
-        timer1.tcnt1().read().bits(),
-    )?;
-    uwrite!(
-        serial,
-        "tccr1a = {}; tccr1b = {};",
-        timer1.tccr1a().read().bits(),
-        timer1.tccr1b().read().bits()
-    )?;
-    uwrite!(
-        serial,
-        "tccr1c = {};",
-        timer1.tccr1c().read().bits(),
-    )?;
-    uwrite!(
-        serial,
-        " tifr1 = {};"
-        timer1.tifr1().read().bits(),
-    )?;
-    uwrite!(
-        serial,
-        " timsk1 = {};"
-        timer1.timsk1().read().bits(),
-    )?;
-    uwrite!(
-        serial,
-        " icr1 = {};"
-        timer1.icr1().read().bits(),
-    )?;
-    uwrite!(
-        serial,
-        " ocr1a = {};"
-        timer1.ocr1a().read().bits(),
-    )?;
-    serial.write_str("\n")
-}
+// use debug::debug_dump;
 
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let pins = arduino_hal::pins!(dp);
-    let mut serial = default_serial!(dp, pins, 115200);
+    // let mut serial = default_serial!(dp, pins, 115200);
 
-    let _ = debug_dump(&mut serial, &dp.TC1);
-    // let timer0 = Timer0Pwm::new(dp.TC0, Prescaler::Prescale1024);
-    // let timer1 = Timer1Pwm::new(dp.TC1, Prescaler::Prescale256);
-    // let timer2 = Timer2Pwm::new(dp.TC2, Prescaler::Prescale64);
-    // let timer3 = Timer3Pwm::new(dp.TC3, Prescaler::Prescale8);
-    // let timer4 = Timer4Pwm::new(dp.TC4, Prescaler::Direct);
-    
-    // let mut d4 = pins.d4.into_output().into_pwm(&timer0);
-    // let mut d12 = pins.d12.into_output().into_pwm(&timer1);
-    // let mut d10 = pins.d10.into_output().into_pwm(&timer2);
-    // let mut d2 = pins.d2.into_output().into_pwm(&timer3);
-    // let mut d6 = pins.d6.into_output().into_pwm(&timer4);
-    
-    // d4.enable();
-    // d12.enable();
-    // d10.enable();
-    // d2.enable();    
-    // d6.enable();
-    
-    
+    // let _ = debug_dump(&mut serial, &dp.TC1);
     
     // pin 11 PWM setup TC1 channel A
     let tc1 = dp.TC1;
@@ -98,7 +38,7 @@ fn main() -> ! {
     tc1.ocr1a().write(|w| w.set(4000u16));
     
     // Toggle pin 11 to output the OC3A output.
-    pins.d11.into_output();
+    pins.d11.into_output().into_pwm(timer);
     
     // tTCNTn = 168; 10101000
     // tccr1a = COM1A 10  COM1B 00 COM1C 00 WGM11-10 00;
@@ -124,7 +64,7 @@ fn main() -> ! {
     
     pins.d3.into_output();
     
-    let _ = debug_dump(&mut serial, &tc1);
+    // let _ = debug_dump(&mut serial, &tc1);
 
     loop {}
 }
