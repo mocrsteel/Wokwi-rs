@@ -7,15 +7,14 @@ use arduino_hal::simple_pwm::IntoPwmPin;
 use panic_halt as _;
 
 mod servo;
-// mod debug;
 
-// use debug::debug_dump;
+use servo::*;
 
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let pins = arduino_hal::pins!(dp);
-    // let mut serial = default_serial!(dp, pins, 115200);
+    let mut serial = default_serial!(dp, pins, 115200);
 
     // let _ = debug_dump(&mut serial, &dp.TC1);
     
@@ -28,6 +27,7 @@ fn main() -> ! {
     // - bits 7:6 - COM1A1:0 = Output compare mode for OC1A (for channel A)
     // - bits 5:4 - COM1B1:0 = Output compare mode for OC1B (for channel B)
     // - bits 3:2 - COM1C1:0 = Output compare mode for OC1C (for channel C)
+    // WGM 010 => FastPWM with ICRn to define TOP and OCRNX to define compare output.
     tc1.tccr1a().write(|w| unsafe {w.com1a().bits(0b10).wgm1().bits(0b10)}); // non-inverting mode Compare output mode for fast-pwm
     tc1.tccr1b().write(|w| unsafe {w.wgm1().bits(0b11).cs1().prescale_8()});
     
@@ -38,16 +38,8 @@ fn main() -> ! {
     tc1.ocr1a().write(|w| w.set(4000u16));
     
     // Toggle pin 11 to output the OC3A output.
-    pins.d11.into_output().into_pwm(timer);
+    pins.d11.into_output();
     
-    // tTCNTn = 168; 10101000
-    // tccr1a = COM1A 10  COM1B 00 COM1C 00 WGM11-10 00;
-    // tccr1b = ICNC1 00 RES 0 WGM13-12 10 CS12-11-10 010;
-    // tifr1 = 0;
-    // timsk1 = 0;
-    // icr1 = 39999;
-    // ocr1a = 4000;
-
     // pin 3 PWM setup with TC3 channel B
     let tc3 = dp.TC3;
     tc3.tccr3a().reset();
@@ -64,7 +56,14 @@ fn main() -> ! {
     
     pins.d3.into_output();
     
+    // let servo = Servo::into_servo();
     // let _ = debug_dump(&mut serial, &tc1);
+    loop {
+        for i in 800..5000u16 {
+            tc1.ocr1a().write(|w| w.set(i));
+            arduino_hal::delay_ms(52);
+            let _ = ufmt::uwrite!(&mut serial, "\n\rOCR1A = {}", i);
 
-    loop {}
+        }
+    }
 }

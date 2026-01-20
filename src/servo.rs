@@ -64,78 +64,64 @@
 //! * 0.5 ms = 125 ticks
 //! * 2.5 ms = 625 ticks
 
+use core::marker::PhantomData;
+
 use arduino_hal::hal::port::{PB6, PB5, PE5, PE4, PE3, PH5, PH4, PH3, PL5, PL4, PL3};
 use arduino_hal::pac::{tc1, tc3, tc4, tc5};
 use arduino_hal::pac::{TC1, TC3, TC4, TC5};
+use arduino_hal::port::mode;
 use arduino_hal::port::{Pin, mode::{Input, Floating},};
-
+use arduino_hal::simple_pwm::{IntoPwmPin, PwmPinOps};
 use avr_device::generic::{Reg, RegisterSpec};
 // Traits to define which ports and timers we accept for the servo driver.
 
-/// Port pin linked to 16-bit timers TC1, TC3, TC4 or TC5.
-pub trait ServoPin<TC> {}      // , OCRNXSpec
 
-impl ServoPin<TC1> for Pin<Input<Floating>, PB6> {}  // , tc1::ocr1b::OCR1B_SPEC
-impl ServoPin<TC1> for Pin<Input<Floating>, PB5> {}  // , tc1::ocr1a::OCR1A_SPEC
-impl ServoPin<TC3> for Pin<Input<Floating>, PE5> {}  // , tc3::ocr3c::OCR3C_SPEC
-impl ServoPin<TC3> for Pin<Input<Floating>, PE4> {}  // , tc3::ocr3b::OCR3B_SPEC
-impl ServoPin<TC3> for Pin<Input<Floating>, PE3> {}  // , tc3::ocr3a::OCR3A_SPEC
-impl ServoPin<TC4> for Pin<Input<Floating>, PH5> {}  // , tc4::ocr4c::OCR4C_SPEC
-impl ServoPin<TC4> for Pin<Input<Floating>, PH4> {}  // , tc4::ocr4b::OCR4B_SPEC
-impl ServoPin<TC4> for Pin<Input<Floating>, PH3> {}  // , tc4::ocr4a::OCR4A_SPEC
-impl ServoPin<TC5> for Pin<Input<Floating>, PL5> {}  // , tc5::ocr5c::OCR5C_SPEC
-impl ServoPin<TC5> for Pin<Input<Floating>, PL4> {}  // , tc5::ocr5b::OCR5B_SPEC
-impl ServoPin<TC5> for Pin<Input<Floating>, PL3> {}  // , tc5::ocr5a::OCR5A_SPEC
-
-
-/// Timer/Counter with 16-bit register TCNTn.
-pub trait ServoTC {
-    // type TCCRNASpec: RegisterSpec;
-    // type TCCRNBSpec: RegisterSpec;
-    // type TCCRNCSpec: RegisterSpec;
-    // type OCRNASpec: RegisterSpec;
-    // type OCRNBSpec: RegisterSpec;
-    // type OCRNCSpec: RegisterSpec;
-    // type ICRNSpec: RegisterSpec;
-
-    // fn tccrna(&self) -> &Reg<Self::TCCRNASpec>;
-    // fn tccrnb(&self) -> &Reg<Self::TCCRNBSpec>;
-    // fn tccrnc(&self) -> &Reg<Self::TCCRNCSpec>;
-    // fn ocrna(&self) -> &Reg<Self::OCRNASpec>;
-    // fn ocrnb(&self) -> &Reg<Self::OCRNBSpec>;
-    // fn ocrnc(&self) -> &Reg<Self::OCRNCSpec>;
-    // fn icrn(&self) -> &Reg<Self::ICRNSpec>;
+pub struct ServoOutput<TC> {
+    pub(crate) _timer: PhantomData<TC>,
 }
 
-impl ServoTC for TC1 {}
-impl ServoTC for TC3 {}
-impl ServoTC for TC4 {}
-impl ServoTC for TC5 {}
- 
-
-pub struct Servo<TC, PORT> {
-    servo_pin: Pin<Input<Floating, PORT>>,
+pub trait IntoServoPin<TC, PIN> {
+    fn into_servo(self, timer: &TC) -> Pin<ServoOutput<TC>, PIN>;
 }
 
-impl<TC> Servo<TC> {
-    pub fn into_servo(tc: TC) -> Self {
-        Servo { pin, tcn }
-    }
+pub trait ServoPinOps<TC> {
+    /// Implement traits and and types for Servo purposed pins/timers.
+    type Degrees;
+
+    fn enable(&mut self);
+    fn disable(&mut self);
+    fn set_angle(&self) -> Self::Degrees;
+    fn get_max_angle(&self) -> Self::Degrees;
 }
 
-
-// It won't actually run these tests, but it allows to test handling the Servo struct purely
-// based on type definitions.
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-
-//     #[test]
-//     fn creates_new_servo() {
-//         let dp = arduino_hal::Peripherals::take().unwrap();
-//         let pins = arduino_hal::pins!(dp);
-//         let tc3 = dp.TC3;
-
-//         let servo = Servo::new(pins.d11.into_output().downgrade(), tc2);
+// impl <TC, PIN: ServoPinOps<TC>> IntoServoPin<TC, PIN> for Pin<mode::Output, PIN> {
+//     fn into_servo(self, _timer: &TC) -> Pin<mode::ServoOutput<TC>, PIN> {
+//         Pin {
+//             pin: self.pin,
+//             _mode: PhantomData,
+//         }
 //     }
 // }
+
+
+// /// Port pin linked to 16-bit timers TC1, TC3, TC4 or TC5.
+// pub trait IntoServo<TC> {
+//     fn into_servo(&self) -> ServoOutput<TC>;
+// }      // , OCRNXSpec
+
+// impl ServoPin<TC1> for Pin<Input<Floating>, PB6> {}  // , tc1::ocr1b::OCR1B_SPEC
+// impl IntoServo<TC1> for Pin<Input<Floating>, PB5> {
+//     fn into_servo(&self, timer: TC1) -> ServoOutput<TC1> {
+
+//     }
+// }  // , tc1::ocr1a::OCR1A_SPEC
+// impl ServoPin<TC3> for Pin<Input<Floating>, PE5> {}  // , tc3::ocr3c::OCR3C_SPEC
+// impl ServoPin<TC3> for Pin<Input<Floating>, PE4> {}  // , tc3::ocr3b::OCR3B_SPEC
+// impl ServoPin<TC3> for Pin<Input<Floating>, PE3> {}  // , tc3::ocr3a::OCR3A_SPEC
+// impl ServoPin<TC4> for Pin<Input<Floating>, PH5> {}  // , tc4::ocr4c::OCR4C_SPEC
+// impl ServoPin<TC4> for Pin<Input<Floating>, PH4> {}  // , tc4::ocr4b::OCR4B_SPEC
+// impl ServoPin<TC4> for Pin<Input<Floating>, PH3> {}  // , tc4::ocr4a::OCR4A_SPEC
+// impl ServoPin<TC5> for Pin<Input<Floating>, PL5> {}  // , tc5::ocr5c::OCR5C_SPEC
+// impl ServoPin<TC5> for Pin<Input<Floating>, PL4> {}  // , tc5::ocr5b::OCR5B_SPEC
+// impl ServoPin<TC5> for Pin<Input<Floating>, PL3> {}  // , tc5::ocr5a::OCR5A_SPEC3
+

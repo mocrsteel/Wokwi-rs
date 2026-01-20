@@ -3,16 +3,17 @@
   "author": "Yannick",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
-    { "type": "wokwi-logic-analyzer", "id": "logic", "top": -326.05, "left": 300, "attrs": {} }
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0.6, "left": -3.6, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo1", "top": -203.6, "left": 355.2, "attrs": {} },
+    { "type": "wokwi-logic-analyzer", "id": "logic1", "top": 384.35, "left": 182.4, "attrs": {} }
   ],
   "connections": [
-    [ "mega:4", "logic:D0", "red", [ "v0" ] ],
-    [ "mega:11", "logic:D1", "yellow", [ "v0" ] ],
-    [ "mega:10", "logic:D2", "orange", [ "v0" ] ],
-    [ "mega:3", "logic:D3", "brown", [ "v0" ] ],
-    [ "mega:6", "logic:D4", "black", [ "v0" ] ],
-    [ "mega:GND.3", "logic:GND", "blue", [ "v40", "h0" ] ]
+    [ "mega:GND.3", "servo1:GND", "black", [ "v0" ] ],
+    [ "mega:5V", "servo1:V+", "red", [ "v35.7", "h261.5", "v-307.2", "h-124.8", "v-57.7" ] ],
+    [ "servo1:PWM", "mega:11", "orange", [ "h0" ] ],
+    [ "logic1:D1", "mega:11", "orange", [ "h-211.2", "v-451.2", "h173.2" ] ],
+    [ "logic1:D0", "mega:3", "orange", [ "h-57.6", "v-86.4", "h345.6", "v-336", "h-245.5" ] ],
+    [ "mega:GND.3", "logic1:GND", "black", [ "v55.5", "h-231.75", "v-441.6" ] ]
   ],
   "dependencies": {}
 }
